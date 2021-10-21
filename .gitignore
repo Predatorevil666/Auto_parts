@@ -1,0 +1,11 @@
+.idea/
+venv/
+__pycache__/
+chromedriver.exe
+geckodriver.exe
+geckodriver.log
+Settings.py
+Test.py
+Test_2.py
+Enter_pass.py
+Pars.py
