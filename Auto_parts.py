@@ -2,7 +2,7 @@ import requests
 import csv
 from bs4 import BeautifulSoup
 
-# - Масляный фильтр hyundai solaris  (пример для ввода)
+
 
 session = requests.Session()
 
@@ -33,61 +33,60 @@ def parse_link_company(enter_parts):  # - функция получения сс
 def parse_parts(get_link):  # - функция парсинга наличия вариантов искомой запчасти
     response_2 = session.get(get_link).text
     soup = BeautifulSoup(response_2, 'lxml')
-    trs = soup.select('tr[class^="search-row group"]')
+    trs = soup.select('tr[class^="search-row"]')
     data = []
     for tr in trs:
-        brand = tr.select('span[class="search-results__info-text"]')  # - Производитель
+        brand = tr.select('span[class^="search-results__info-text"]')  # - Производитель
         if not brand:
             continue
         else:
             brand = brand[0].text.strip()
-            print(brand)
-        number_parts = tr.select('a[class="search-results__article search-results__article_main"]')  # - Код товара
+            # print(brand)
+
+        number_parts = tr.select('div[class="search-results__article_group"]')   # - Код товара
         if not number_parts:
             continue
         else:
             number_parts = number_parts[0].text.strip()
-            print(number_parts)
-        rating = tr.select('span[class="column-val__count"]')  # -  Рейтинг
-        if not rating:
-            continue
-        else:
-            rating = rating[0].text.strip()
-            print(rating)
-        delivery_time = tr.select('div[class="search-col__term-wrapper"]')   # - Срок доставки
-        if not delivery_time:
-            continue
-        else:
-            delivery_time = delivery_time[0].text.strip()
-            print(delivery_time)
-        parts_location = tr.select('td[class="search-col search-col__destination_display"]')  # - Местоположение товара
-        if not parts_location:
-            continue
-        else:
-            parts_location = parts_location[0].text.strip()
-            print(parts_location)
-        availability_parts = tr.select('td[class="search-col search-col__remains"]')    # - Наличие
-        if not availability_parts:
-            continue
-        else:
-            availability_parts = availability_parts[0].text.strip()
-            print(availability_parts)
-        price = tr.select('td[class="search-col search-col__final_price"]')   # - Цена
-        if not price:
-            continue
-        else:
-            price = price[0].text.strip()
-            print(price)
+            # print(number_parts)
 
-        data.append({'Производитель': brand, 'Код товара': number_parts, 'Рейтинг': rating,
-                     'Срок доставки': delivery_time, 'Местоположение товара': parts_location,
+        name_parts = tr.select('td[class="search-col search-col__spare_info"]')  # - Наименование товара
+        if not name_parts:
+            continue
+        else:
+            name_parts = name_parts[0].text.strip()
+            # print(name_parts)
+
+        rating = tr.select('span[class="column-val__count"]')  # -  Рейтинг
+        rating = rating[0].text.strip()
+        # print(rating)
+
+        delivery_time = tr.select('div[class^="search-col__term-wrapper"]')   # - Срок доставки
+        delivery_time = delivery_time[0].text.strip()
+        # print(delivery_time)
+
+        parts_location = tr.select('td[class="search-col search-col__destination_display"]')  # - Местоположение товара
+        parts_location = parts_location[0].text.strip()
+        # print(parts_location)
+
+        availability_parts = tr.select('td[class="search-col search-col__remains"]')    # - Наличие
+        availability_parts = availability_parts[0].text.strip()
+        # print(availability_parts)
+
+        price = tr.select('td[class="search-col search-col__final_price"]')   # - Цена
+        price = price[0].text.strip()
+        # print(price)
+
+        data.append({'Производитель': brand, 'Код товара': number_parts, 'Наименование товара': name_parts,
+                     'Рейтинг': rating, 'Срок доставки': delivery_time, 'Местоположение товара': parts_location,
                      'Наличие': availability_parts, 'Цена': price})
     return data
 
 
 def writer_csv(auto_parts):  # - функция записи в csv файл
     with open('auto_parts.csv', 'w', newline='', encoding='utf-8') as file:
-        fields = ['Производитель', 'Код товара', 'Рейтинг', 'Срок доставки', 'Местоположение товара', 'Наличие', 'Цена']
+        fields = ['Производитель', 'Код товара', 'Наименование товара', 'Рейтинг',
+                  'Срок доставки', 'Местоположение товара', 'Наличие', 'Цена']
         writer = csv.DictWriter(file, fieldnames=fields, delimiter=';')
         writer.writeheader()
         for i in auto_parts:
