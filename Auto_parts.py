@@ -2,8 +2,6 @@ import requests
 import csv
 from bs4 import BeautifulSoup
 
-
-
 session = requests.Session()
 
 
@@ -30,52 +28,35 @@ def parse_link_company(enter_parts):  # - функция получения сс
     return None
 
 
+def refined(li):   # - нормализация данных
+    if li:
+        result = li[0].text.strip()
+        return result
+    return None
+
+
 def parse_parts(get_link):  # - функция парсинга наличия вариантов искомой запчасти
     response_2 = session.get(get_link).text
     soup = BeautifulSoup(response_2, 'lxml')
     trs = soup.select('tr[class^="search-row"]')
     data = []
     for tr in trs:
-        brand = tr.select('span[class^="search-results__info-text"]')  # - Производитель
+        brand = refined(tr.select('span[class^="search-results__info-text"]'))  # - Производитель
         if not brand:
             continue
-        else:
-            brand = brand[0].text.strip()
-            # print(brand)
+        number_parts = refined(tr.select('div[class="search-results__article_group"]'))   # - Код товара
 
-        number_parts = tr.select('div[class="search-results__article_group"]')   # - Код товара
-        if not number_parts:
-            continue
-        else:
-            number_parts = number_parts[0].text.strip()
-            # print(number_parts)
+        name_parts = refined(tr.select('td[class="search-col search-col__spare_info"]'))  # - Наименование товара
 
-        name_parts = tr.select('td[class="search-col search-col__spare_info"]')  # - Наименование товара
-        if not name_parts:
-            continue
-        else:
-            name_parts = name_parts[0].text.strip()
-            # print(name_parts)
+        rating = refined(tr.select('span[class="column-val__count"]'))  # -  Рейтинг
 
-        rating = tr.select('span[class="column-val__count"]')  # -  Рейтинг
-        rating = rating[0].text.strip()
-        # print(rating)
+        delivery_time = refined(tr.select('div[class^="search-col__term-wrapper"]'))   # - Срок доставки
 
-        delivery_time = tr.select('div[class^="search-col__term-wrapper"]')   # - Срок доставки
-        delivery_time = delivery_time[0].text.strip()
-        # print(delivery_time)
+        parts_location = refined(tr.select('td[class="search-col search-col__destination_display"]'))  # - Местоположение товара
 
-        parts_location = tr.select('td[class="search-col search-col__destination_display"]')  # - Местоположение товара
-        parts_location = parts_location[0].text.strip()
-        # print(parts_location)
+        availability_parts = refined(tr.select('td[class="search-col search-col__remains"]'))    # - Наличие
 
-        availability_parts = tr.select('td[class="search-col search-col__remains"]')    # - Наличие
-        availability_parts = availability_parts[0].text.strip()
-        # print(availability_parts)
-
-        price = tr.select('td[class="search-col search-col__final_price"]')   # - Цена
-        price = price[0].text.strip()
-        # print(price)
+        price = refined(tr.select('td[class="search-col search-col__final_price"]'))   # - Цена
 
         data.append({'Производитель': brand, 'Код товара': number_parts, 'Наименование товара': name_parts,
                      'Рейтинг': rating, 'Срок доставки': delivery_time, 'Местоположение товара': parts_location,
@@ -94,11 +75,19 @@ def writer_csv(auto_parts):  # - функция записи в csv файл
 
 
 def main():
-    url = 'https://ryazan.1001z.ru/search.html?article={article}&brand=&st=groups&term=0&chk_smode=A&smode=A&sort___search_results_by=final_price&smart_search=1'
-    enter_parts = load_page(url)
-    get_link = parse_link_company(enter_parts)
-    auto_parts = parse_parts(get_link)
-    writer_csv(auto_parts)
+    url = 'https://ryazan.1001z.ru/search.html?article={article}&brand=&st=groups&term=0&chk_smode=A&smode' \
+          '=A&sort___search_results_by=final_price&smart_search=1'
+    try:
+        enter_parts = load_page(url)
+        get_link = parse_link_company(enter_parts)
+        auto_parts = parse_parts(get_link)
+        writer_csv(auto_parts)
+    except ConnectionError:
+        print('Нет доступа к сети интернет ! ')
+    except KeyboardInterrupt:
+        print('Досрочное завершение программы ! ')
+    except PermissionError:
+        print('Необходимо закрыть auto_parts.csv файл для записи новых данных !')
 
 
 if __name__ == "__main__":
